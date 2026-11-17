@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>일본어 인사 챌린지</title>
+<style>
+  /* 광고 소재(전면 웹페이지) — 1080×1920(9:16) 무대를 화면에 맞춰 줄인다. 앱 UI 가 아니라 소재라 Chat Japanese 강조색(#5CE1E6)을 직접 쓴다. */
+  :root { --brand: #5CE1E6; --brand-deep: #078488; --ink: #111318; --sky: #0E1A2B; --sky2: #16304A; --sakura: #FFB7C9; --white: #FFFFFF; --wrong: #FF6B7A; }
+  html, body { margin: 0; height: 100%; background: var(--sky); overflow: hidden; font-family: -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Hiragino Sans", sans-serif; }
+  #fit { position: fixed; inset: 0; }
+  #stage { width: 1080px; height: 1920px; position: absolute; left: 50%; top: 50%; overflow: hidden; transform-origin: center; color: var(--white);
+    background: radial-gradient(1200px 900px at 50% 20%, var(--sky2), var(--sky)); }
+  .petal { position: absolute; top: -80px; width: 34px; height: 26px; background: var(--sakura); border-radius: 26px 2px 26px 2px; opacity: .8; animation: fall linear infinite; }
+  @keyframes fall { to { transform: translate(-160px, 2100px) rotate(540deg); } }
+
+  header { position: absolute; top: 120px; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 24px; }
+  header img { width: 112px; height: 112px; border-radius: 28px; }
+  header b { font-size: 56px; letter-spacing: -1px; }
+  .hud { position: absolute; top: 290px; left: 90px; right: 90px; display: flex; justify-content: space-between; font-size: 40px; font-weight: 700; }
+  .hud .score { color: var(--brand); }
+  .dots { display: flex; gap: 16px; }
+  .dots i { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,.2); }
+  .dots i.ok { background: var(--brand); } .dots i.ng { background: var(--wrong); }
+
+  .card { position: absolute; top: 420px; left: 90px; right: 90px; height: 620px; border-radius: 56px; background: var(--white); color: var(--ink);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; box-shadow: 0 30px 0 var(--brand-deep); }
+  .card small { font-size: 40px; color: var(--brand-deep); font-weight: 700; }
+  .card .word { font-size: 150px; font-weight: 800; letter-spacing: 4px; }
+  .card .read { font-size: 44px; color: #6B7280; }
+  .card.pop { animation: pop .35s ease-out; } @keyframes pop { 50% { transform: scale(1.04); } }
+  .card.shake { animation: shake .4s; } @keyframes shake { 25% { transform: translateX(-24px); } 75% { transform: translateX(24px); } }
+
+  .choices { position: absolute; top: 1130px; left: 90px; right: 90px; display: grid; gap: 32px; }
+  .choices button { height: 160px; border: 0; border-radius: 40px; font: inherit; font-size: 54px; font-weight: 700; color: var(--ink); background: var(--white); box-shadow: 0 14px 0 rgba(255,255,255,.25); cursor: pointer; }
+  .choices button:active { transform: translateY(8px); box-shadow: 0 6px 0 rgba(255,255,255,.25); }
+  .choices button.ok { background: var(--brand); } .choices button.ng { background: var(--wrong); color: var(--white); }
+  .hint { position: absolute; bottom: 150px; left: 0; right: 0; text-align: center; font-size: 40px; opacity: .7; }
+  .burst { position: absolute; font-size: 90px; font-weight: 800; color: var(--brand); pointer-events: none; animation: up .9s ease-out forwards; }
+  @keyframes up { to { transform: translateY(-160px); opacity: 0; } }
+
+  .result { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 40px; text-align: center; padding: 0 90px; }
+  .result.show { display: flex; animation: pop .4s ease-out; }
+  .result .big { font-size: 120px; font-weight: 800; color: var(--brand); }
+  .result h2 { margin: 0; font-size: 72px; line-height: 1.3; }
+  .result p { margin: 0; font-size: 46px; opacity: .8; }
+  .cta { margin-top: 40px; display: block; width: 100%; height: 190px; line-height: 190px; border-radius: 95px; background: var(--brand); color: var(--ink); font-size: 62px; font-weight: 800; text-decoration: none;
+    box-shadow: 0 16px 0 var(--brand-deep); animation: breathe 1.6s ease-in-out infinite; }
+  @keyframes breathe { 50% { transform: scale(1.04); } }
+  .again { font-size: 42px; color: var(--white); opacity: .7; background: none; border: 0; font-family: inherit; text-decoration: underline; cursor: pointer; }
+  @media (prefers-reduced-motion: reduce) { .petal, .cta { animation: none; } }
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <header><img src="icons/icon-round-192.png" alt="" /><b>Chat Japanese</b></header>
+  <div class="hud" id="hud"><span>일본어 인사 챌린지</span><span class="score" id="score">0점</span></div>
+  <div class="hud" style="top: 360px; justify-content: center"><div class="dots" id="dots"><i></i><i></i><i></i></div></div>
+  <div class="card" id="card"><small id="q">이 말의 뜻은?</small><div class="word" id="word"></div><div class="read" id="read"></div></div>
+  <div class="choices" id="choices"></div>
+  <div class="hint" id="hint">정답을 눌러 보세요</div>
+  <div class="result" id="result">
+    <div class="big" id="final"></div>
+    <h2>이제 진짜 일본 친구와<br />말해 볼 차례!</h2>
+    <p>일본 친구를 사귀고 일본어를 배워보세요</p>
+    <a class="cta" id="cta" target="_blank" rel="noopener">Chat Japanese 시작하기</a>
+    <button class="again" id="again" type="button">다시 하기</button>
+  </div>
+</div></div>
+<script>
+  const Q = [
+    { word: 'こんにちは', read: '곤니치와', a: '안녕하세요', c: ['안녕하세요', '고마워요', '잘 자요'] },
+    { word: 'ありがとう', read: '아리가토', a: '고마워요', c: ['미안해요', '고마워요', '맛있어요'] },
+    { word: 'よろしくね', read: '요로시쿠네', a: '잘 부탁해', c: ['잘 부탁해', '또 봐요', '배고파요'] },
+  ];
+  const $ = id => document.getElementById(id);
+  const stage = $('stage');
+  function fit() { const s = Math.min(innerWidth / 1080, innerHeight / 1920); stage.style.transform = `translate(-50%, -50%) scale(${s})`; }
+  addEventListener('resize', fit); fit();
+  for (let i = 0; i < 14; i++) { const p = document.createElement('i'); p.className = 'petal'; p.style.left = (Math.random() * 1240) + 'px'; p.style.animationDuration = (7 + Math.random() * 6) + 's'; p.style.animationDelay = (-Math.random() * 12) + 's'; stage.prepend(p); }
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  $('cta').href = ios ? 'https://apps.apple.com/app/id6802561686' : 'https://play.google.com/store/apps/details?id=io.pixelteam.chatjapanese';
+  let n = 0, score = 0, lock = false;
+  function show() {
+    const q = Q[n]; lock = false;
+    $('word').textContent = q.word; $('read').textContent = q.read;
+    $('choices').innerHTML = '';
+    q.c.forEach(t => { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.onclick = () => pick(b, t); $('choices').appendChild(b); });
+  }
+  function pick(b, t) {
+    if (lock) return; lock = true;
+    const q = Q[n], ok = t === q.a, card = $('card');
+    card.classList.remove('pop', 'shake'); void card.offsetWidth; card.classList.add(ok ? 'pop' : 'shake');
+    b.classList.add(ok ? 'ok' : 'ng');
+    if (!ok) [...$('choices').children].find(x => x.textContent === q.a).classList.add('ok');
+    $('dots').children[n].className = ok ? 'ok' : 'ng';
+    if (ok) { score += 100; $('score').textContent = score + '점'; const f = document.createElement('div'); f.className = 'burst'; f.textContent = '+100'; f.style.left = '440px'; f.style.top = '1000px'; stage.appendChild(f); setTimeout(() => f.remove(), 900); }
+    setTimeout(() => { n++; n < Q.length ? show() : end(); }, 900);
+  }
+  function end() {
+    ['card', 'choices', 'hint', 'hud'].forEach(id => $(id).style.display = 'none');
+    document.querySelectorAll('.hud').forEach(h => h.style.display = 'none');
+    $('final').textContent = `${score / 100} / ${Q.length} 정답`;
+    $('result').classList.add('show');
+  }
+  $('again').onclick = () => {
+    n = 0; score = 0; $('score').textContent = '0점'; [...$('dots').children].forEach(d => d.className = '');
+    $('result').classList.remove('show');
+    ['card', 'hint'].forEach(id => $(id).style.display = ''); $('choices').style.display = 'grid';
+    document.querySelectorAll('.hud').forEach(h => h.style.display = 'flex');
+    show();
+  };
+  show();
+</script>
+</body>
+</html>
